@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: wanderlust
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SECRET
+        generateValue: true
+      - key: GOOGLE_MAPS_API_KEY
+        value: AIzaSyCYxtP6QYbsqFOdWcz9tCdPcnhTDtBYVHs
+      - key: ATLASDB_URL
+        sync: false # You will need to paste your MongoDB Atlas URL in the Render dashboard
