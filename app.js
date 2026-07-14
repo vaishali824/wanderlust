@@ -93,7 +93,7 @@ passport.deserializeUser(User.deserializeUser());
 
 // Root Route
 app.get("/", (req, res) => {  
-  res.send("Hi, I am root!");
+  res.redirect("/listings");
 });
 
 
