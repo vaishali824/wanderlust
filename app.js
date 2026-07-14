@@ -30,9 +30,7 @@ const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
 
 // MongoDB Connection
-const dbUrl = (process.env.ATLASDB_URL && !process.env.ATLASDB_URL.includes("mongodb+srv://vaishalimuddasani_db_user:PFSjpYNVCSgCoK5O@cluster0.vebfugj.mongodb.net/?appName=Cluster0"))
-  ? process.env.ATLASDB_URL
-  : "mongodb://127.0.0.1:27017/wanderlust";
+const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
 
 let isConnecting = false;
 
