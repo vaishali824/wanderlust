@@ -1,104 +1,353 @@
 <% layout("/layouts/boilerplate") %>
 
+<!-- Mapbox GL JS/CSS (Already in boilerplate, but safety script declarations) -->
+<script>
+    const mapToken = "<%= process.env.MAP_TOKEN %>";
+    const allListings = <%- JSON.stringify(allListings) %>;
+</script>
+
 <style>
     #filters {
         display: flex;
-        flex-wrap: wrap;
+        flex-wrap: nowrap;
+        overflow-x: auto;
         align-items: center;
         margin-top: 1rem;
+        padding-bottom: 0.5rem;
+        scrollbar-width: thin;
+        -ms-overflow-style: none;
+    }
+    #filters::-webkit-scrollbar {
+        height: 4px;
+    }
+    #filters::-webkit-scrollbar-thumb {
+        background-color: #ddd;
+        border-radius: 4px;
     }
     .filter {
         text-align: center;
         margin-right: 2rem;
-        opacity: 0.7;
-        transition: 0.3s;
+        opacity: 0.65;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         cursor: pointer;
+        min-width: 55px;
+        position: relative;
+        padding-bottom: 0.5rem;
     }
     .filter:hover {
         opacity: 1;
+        transform: translateY(-2px);
+    }
+    .filter.active-filter {
+        opacity: 1;
+        font-weight: 600;
+        color: #fe424d;
+    }
+    .filter.active-filter::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 10%;
+        width: 80%;
+        height: 3px;
+        background-color: #fe424d;
+        border-radius: 2px;
+        animation: scaleIn 0.25s ease forwards;
+    }
+    .filter i {
+        font-size: 1.3rem;
+        margin-bottom: 0.3rem;
+        display: block;
     }
     .filter p {
-        font-size: 0.8rem;
+        font-size: 0.75rem;
+        margin: 0;
     }
     .tax-info {
         display: none;
+        transition: all 0.3s ease;
     }
     .tax-toggle {
-        border: 1px solid black;
-        border-radius: 1rem;
-        height: 3.25rem;
-        padding: 1rem;
+        border: 1px solid #dee2e6;
+        border-radius: 1.25rem;
+        height: 3.5rem;
+        padding: 0 1.25rem;
         display: flex;
         align-items: center;
         margin-left: auto;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        background: #fff;
+    }
+    .listing-card {
+        border: none !important;
+        margin-bottom: 2rem;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        background: transparent !important;
+    }
+    .listing-card:hover {
+        transform: translateY(-5px);
+    }
+    .listing-card:hover .card-img-top {
+        transform: scale(1.04);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .img-container {
+        position: relative;
+        border-radius: 1.25rem;
+        overflow: hidden;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.08);
+    }
+    .img-container img {
+        transition: all 0.5s ease;
+    }
+    .heart-badge {
+        position: absolute;
+        top: 1rem;
+        right: 1rem;
+        z-index: 10;
+        background: rgba(255, 255, 255, 0.9);
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    .heart-badge:hover {
+        background: #fff;
+        transform: scale(1.1);
+    }
+    #index-map {
+        border-radius: 1.5rem;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    
+    /* Map Marker Pin Style */
+    .custom-map-marker {
+        width: 35px;
+        height: 35px;
+        background-color: #fe424d;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        border: 2px solid white;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        transition: all 0.3s ease;
+    }
+    .custom-map-marker:hover {
+        transform: scale(1.2);
+        background-color: #000;
+    }
+    .map-popup-card {
+        border-radius: 1rem;
+        overflow: hidden;
+        max-width: 200px;
+    }
+    .map-popup-img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+    }
+
+    @keyframes scaleIn {
+        from { transform: scaleX(0); }
+        to { transform: scaleX(1); }
+    }
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    .listing-item {
+        animation: fadeInUp 0.4s ease forwards;
     }
 </style>
 
-<div id="filters" class="mb-3">
-    <div class="filter">
-        <div><i class="fa-solid fa-fire"></i></div>
-        <p>Trending</p>
-    </div>
-    <div class="filter">
-        <div><i class="fa-solid fa-bed"></i></div>
-        <p>Rooms</p>
-    </div>
-    <div class="filter">
-        <div><i class="fa-solid fa-mountain-city"></i></div>
-        <p>Iconic Cities</p>
-    </div>
-    <div class="filter">
-        <div><i class="fa-solid fa-mountain"></i></div>
-        <p>Mountains</p>
-    </div>
-    <div class="filter">
-        <div><i class="fa-solid fa-umbrella-beach"></i></div>
-        <p>Beach</p>
-    </div>
-    <div class="filter">
-        <div><i class="fa-solid fa-person-swimming"></i></div>
-        <p>Amazing Pools</p>
-    </div>
-
-    <div class="tax-toggle">
-        <div class="form-check-reverse form-switch">
-            <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault">
-            <label class="form-check-label" for="flexSwitchCheckDefault">Display total after taxes</label>
+<div class="container my-3">
+    <!-- Category Filter Bar -->
+    <div id="filters" class="mb-4 d-flex align-items-center">
+        <div class="filter active-filter" data-category="All">
+            <div><i class="fa-solid fa-border-all"></i></div>
+            <p>All</p>
         </div>
-    </div>
-</div>
+        <div class="filter" data-category="Trending">
+            <div><i class="fa-solid fa-fire"></i></div>
+            <p>Trending</p>
+        </div>
+        <div class="filter" data-category="Rooms">
+            <div><i class="fa-solid fa-bed"></i></div>
+            <p>Rooms</p>
+        </div>
+        <div class="filter" data-category="Iconic Cities">
+            <div><i class="fa-solid fa-mountain-city"></i></div>
+            <p>Iconic Cities</p>
+        </div>
+        <div class="filter" data-category="Mountains">
+            <div><i class="fa-solid fa-mountain"></i></div>
+            <p>Mountains</p>
+        </div>
+        <div class="filter" data-category="Beach">
+            <div><i class="fa-solid fa-umbrella-beach"></i></div>
+            <p>Beach</p>
+        </div>
+        <div class="filter" data-category="Amazing Pools">
+            <div><i class="fa-solid fa-person-swimming"></i></div>
+            <p>Amazing Pools</p>
+        </div>
+        <div class="filter" data-category="Farms">
+            <div><i class="fa-solid fa-cow"></i></div>
+            <p>Farms</p>
+        </div>
+        <div class="filter" data-category="Arctic">
+            <div><i class="fa-solid fa-snowflake"></i></div>
+            <p>Arctic</p>
+        </div>
+        <div class="filter" data-category="Domes">
+            <div><i class="fa-solid fa-igloo"></i></div>
+            <p>Domes</p>
+        </div>
+        <div class="filter" data-category="Boats">
+            <div><i class="fa-solid fa-ship"></i></div>
+            <p>Boats</p>
+        </div>
 
-<div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1">
-    <% for(let listing of allListings) { %>
-    <a href="/listings/<%= listing._id %>" class="listing-link text-decoration-none">
-        <div class="card col listing-card" style="border: none;">
-            <% if (listing.image && listing.image.url) { %>
-            <img src="<%= listing.image.url %>" class="card-img-top" alt="listing_image" style="height: 20rem; object-fit: cover; border-radius: 1rem;" />
-            <% } else { %>
-            <img src="https://images.unsplash.com/photo-default" class="card-img-top" alt="default_image" style="height: 20rem; object-fit: cover; border-radius: 1rem;" />
-            <% } %>
-
-            <div class="card-img-overlay"></div>
-            <div class="card-body">
-                <p class="card-text h6 mt-2 text-dark">
-                    <b><%= listing.title %></b>
-                    <br />
-                    &#8377; <%= listing.price.toLocaleString("en-IN") %> / night
-                    <i class="tax-info text-muted"> &nbsp; +18% GST</i>
-                </p>
+        <div class="tax-toggle ms-auto shadow-sm">
+            <div class="form-check form-switch form-check-reverse">
+                <input class="form-check-input" type="checkbox" role="switch" id="flexSwitchCheckDefault" style="cursor: pointer;">
+                <label class="form-check-label text-muted" for="flexSwitchCheckDefault" style="cursor: pointer; font-size: 0.85rem; font-weight: 500;">Display after taxes</label>
             </div>
         </div>
-    </a>
-    <% } %>
+    </div>
+
+    <!-- Map Toggle and Collapsible Map -->
+    <div class="collapse" id="mapCollapse">
+        <div class="card card-body mb-4 border-0 p-0 shadow-sm overflow-hidden" style="border-radius: 1.5rem;">
+            <div id="index-map" style="height: 380px; width: 100%;"></div>
+        </div>
+    </div>
+
+    <div class="map-toggle-section text-center mb-4">
+        <button class="btn btn-dark rounded-pill px-4 py-2 shadow" type="button" data-bs-toggle="collapse" data-bs-target="#mapCollapse" aria-expanded="false" aria-controls="mapCollapse" id="toggle-map-btn">
+            <i class="fa-solid fa-map-location-dot me-2 text-danger"></i><span id="toggle-map-text">Show Map</span>
+        </button>
+    </div>
+
+    <!-- Listing Cards Grid -->
+    <div class="row row-cols-lg-3 row-cols-md-2 row-cols-sm-1" id="listings-grid">
+        <% for(let listing of allListings) { %>
+        <div class="col listing-item" data-category="<%= listing.category %>">
+            <a href="/listings/<%= listing._id %>" class="listing-link text-decoration-none">
+                <div class="card listing-card">
+                    <div class="img-container">
+                        <% if (listing.image && listing.image.url) { %>
+                        <img src="<%= listing.image.url %>" class="card-img-top" alt="listing_image" style="height: 20rem; object-fit: cover;" />
+                        <% } else { %>
+                        <img src="https://images.unsplash.com/photo-default" class="card-img-top" alt="default_image" style="height: 20rem; object-fit: cover;" />
+                        <% } %>
+                        <span class="badge bg-dark position-absolute m-3 px-3 py-2 opacity-90 shadow-sm" style="top: 0; left: 0; font-weight: 500; font-size: 0.75rem;"><%= listing.category %></span>
+                        <div class="heart-badge"><i class="fa-regular fa-heart text-dark"></i></div>
+                    </div>
+
+                    <div class="card-body px-1 mt-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h6 class="text-dark mb-1 font-weight-bold text-truncate" style="max-width: 80%;"><%= listing.title %></h6>
+                            <span class="text-muted text-sm"><i class="fa-solid fa-star text-warning" style="font-size:0.8rem;"></i> New</span>
+                        </div>
+                        <p class="card-text text-muted mb-0" style="font-size:0.85rem;"><%= listing.location %>, <%= listing.country %></p>
+                        <p class="card-text text-dark font-weight-bold mt-1" style="font-size: 0.95rem;">
+                            &#8377; <%= listing.price.toLocaleString("en-IN") %> <span class="text-muted font-weight-normal" style="font-size: 0.85rem;">/ night</span>
+                            <i class="tax-info text-success ms-1" style="font-style: normal; font-size: 0.85rem;"> &nbsp; +18% GST (&#8377;<%= (listing.price * 0.18).toLocaleString("en-IN") %>)</i>
+                        </p>
+                    </div>
+                </div>
+            </a>
+        </div>
+        <% } %>
+    </div>
 </div>
 
+<!-- Map Scripts and Interactivity Logic -->
+<script src="/js/indexMap.js"></script>
 <script>
+    // Map Toggle Logic
+    const mapCollapse = document.getElementById('mapCollapse');
+    const toggleMapBtn = document.getElementById('toggle-map-btn');
+    const toggleMapBtnText = document.getElementById('toggle-map-text');
+    const toggleMapBtnIcon = toggleMapBtn.querySelector('i');
+
+    if (mapCollapse) {
+        mapCollapse.addEventListener('shown.bs.collapse', () => {
+            toggleMapBtnText.textContent = "Hide Map";
+            toggleMapBtnIcon.className = "fa-solid fa-list me-2 text-danger";
+            // Initialize map if not yet initialized, else resize to render properly
+            if (typeof initIndexMap === "function") {
+                if (!indexMap) {
+                    initIndexMap();
+                } else {
+                    indexMap.resize();
+                }
+            }
+        });
+        mapCollapse.addEventListener('hidden.bs.collapse', () => {
+            toggleMapBtnText.textContent = "Show Map";
+            toggleMapBtnIcon.className = "fa-solid fa-map-location-dot me-2 text-danger";
+        });
+    }
+
+    // Client-side Category Filter Logic
+    const filterPills = document.querySelectorAll(".filter");
+    const listingItems = document.querySelectorAll(".listing-item");
+
+    filterPills.forEach(pill => {
+        pill.addEventListener("click", () => {
+            // Toggle active-filter class
+            const activeFilter = document.querySelector(".filter.active-filter");
+            if (activeFilter) activeFilter.classList.remove("active-filter");
+            pill.classList.add("active-filter");
+
+            const selectedCat = pill.getAttribute("data-category");
+            let activeListings = [];
+
+            listingItems.forEach(item => {
+                const itemCat = item.getAttribute("data-category");
+                if (selectedCat === "All" || itemCat === selectedCat) {
+                    item.style.display = "block";
+                    item.style.animation = "fadeInUp 0.4s ease forwards";
+                    
+                    // Match the correct listing data for map markers updates
+                    const link = item.querySelector("a").getAttribute("href");
+                    const listingId = link.substring(link.lastIndexOf("/") + 1);
+                    const matchingListing = allListings.find(l => l._id === listingId);
+                    if (matchingListing) activeListings.push(matchingListing);
+                } else {
+                    item.style.display = "none";
+                }
+            });
+
+            // Update Map Markers for visible items
+            if (typeof updateMapMarkers === "function") {
+                updateMapMarkers(activeListings);
+            }
+        });
+    });
+
+    // Tax Switch toggle functionality
     let taxSwitch = document.getElementById("flexSwitchCheckDefault");
     if(taxSwitch) {
-        taxSwitch.addEventListener("click", () => {
+        taxSwitch.addEventListener("change", () => {
             let taxInfoElements = document.getElementsByClassName("tax-info");
-            for(info of taxInfoElements) {
-                if(info.style.display !== "inline") {
+            for(let info of taxInfoElements) {
+                if(taxSwitch.checked) {
                     info.style.display = "inline";
                 } else {
                     info.style.display = "none";

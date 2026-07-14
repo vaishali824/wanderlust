@@ -1,23 +1,44 @@
 const Listing = require("../models/listing");
-const mbxGeocoding = require("@mapbox/mapbox-sdk/services/geocoding");
-const mapToken = process.env.MAP_TOKEN;
-const geocodingClient = mapToken ? mbxGeocoding({ accessToken: mapToken }) : null;
+
+// Helper function to geocode location using Google Maps Geocoding API
+async function geocodeLocation(location) {
+  const apiKey = process.env.GOOGLE_MAPS_API_KEY;
+  if (!apiKey || apiKey.includes("add_your")) {
+    return { type: 'Point', coordinates: [0, 0] };
+  }
+  try {
+    const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(location)}&key=${apiKey}`;
+    const res = await fetch(url);
+    const data = await res.json();
+    if (data.status === "OK" && data.results && data.results.length > 0) {
+      const { lat, lng } = data.results[0].geometry.location;
+      return {
+        type: 'Point',
+        coordinates: [lng, lat] // GeoJSON format: [longitude, latitude]
+      };
+    }
+  } catch (err) {
+    console.error("Geocoding error:", err);
+  }
+  return { type: 'Point', coordinates: [0, 0] };
+}
 
 module.exports.index = async (req, res) => {
-    const search = req.query.search;
-    let allListings;
+    const { search, category } = req.query;
+    let query = {};
     if (search) {
-        allListings = await Listing.find({ 
-            $or: [
-                { title: { $regex: search, $options: "i" } },
-                { country: { $regex: search, $options: "i" } },
-                { location: { $regex: search, $options: "i" } }
-            ]
-        });
-    } else {
-        allListings = await Listing.find({});
+        query.$or = [
+            { title: { $regex: search, $options: "i" } },
+            { country: { $regex: search, $options: "i" } },
+            { location: { $regex: search, $options: "i" } },
+            { category: { $regex: search, $options: "i" } }
+        ];
     }
-    res.render("listings/index", { allListings });
+    if (category) {
+        query.category = category;
+    }
+    const allListings = await Listing.find(query);
+    res.render("listings/index", { allListings, category: category || "" });
 };
 
 module.exports.renderNewForm = (req, res) => {
@@ -42,25 +63,18 @@ module.exports.showListing = async (req, res) => {
 };
 
 module.exports.createListing = async (req, res, next) => {
-    let response;
-    if (geocodingClient) {
-        response = await geocodingClient.forwardGeocode({
-            query: req.body.listing.location,
-            limit: 1,
-        }).send();
+    let url = "https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxzZWFyY2h8MTh8fHRyYXZlbHxlbnwwfHwwfHx8MA%3D%3D&auto=format&fit=cover&w=800&q=60";
+    let filename = "default_image";
+    if (req.file) {
+        url = req.file.path.startsWith("http") ? req.file.path : `/uploads/${req.file.filename}`;
+        filename = req.file.filename;
     }
 
-    const url = req.file.path;
-    const filename = req.file.filename;
     const newListing = new Listing(req.body.listing);
     newListing.owner = req.user._id;
     newListing.image = { url, filename };
     
-    if (response) {
-        newListing.geometry = response.body.features[0].geometry;
-    } else {
-        newListing.geometry = { type: 'Point', coordinates: [0, 0] };
-    }
+    newListing.geometry = await geocodeLocation(req.body.listing.location);
 
     await newListing.save();
     req.flash("success", "New Listing Created!");
@@ -88,17 +102,13 @@ module.exports.updateListing = async (req, res) => {
     let listing = await Listing.findByIdAndUpdate(id, { ...req.body.listing });
 
     // Handle Coordinate update if location changed
-    if (req.body.listing.location && geocodingClient) {
-        let response = await geocodingClient.forwardGeocode({
-            query: req.body.listing.location,
-            limit: 1,
-        }).send();
-        listing.geometry = response.body.features[0].geometry;
+    if (req.body.listing.location) {
+        listing.geometry = await geocodeLocation(req.body.listing.location);
         await listing.save();
     }
 
     if (typeof req.file !== "undefined") {
-        let url = req.file.path;
+        let url = req.file.path.startsWith("http") ? req.file.path : `/uploads/${req.file.filename}`;
         let filename = req.file.filename;
         listing.image = { url, filename };
         await listing.save();

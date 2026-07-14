@@ -13,6 +13,7 @@
         <label for="title" class="form-label">Title</label>
         <input
           name="listing[title]"
+          id="title"
           placeholder="enter title"
           type="text"
           class="form-control"
@@ -27,6 +28,7 @@
         <label for="description" class="form-label">Description</label>
         <textarea
           name="listing[description]"
+          id="description"
           placeholder="enter description"
           class="form-control"
           required
@@ -40,6 +42,7 @@
         <label for="image" class="form-label">Upload Image</label>
         <input
           name="listing[image]"
+          id="image"
           type="file"
           class="form-control"
           required
@@ -52,6 +55,7 @@
           <label for="price" class="form-label">Price</label>
           <input
             name="listing[price]"
+            id="price"
             placeholder="enter price"
             type="number"
             class="form-control"
@@ -65,6 +69,7 @@
           <label for="country" class="form-label">Country</label>
           <input
             name="listing[country]"
+            id="country"
             placeholder="enter country"
             type="text"
             class="form-control"
@@ -75,11 +80,30 @@
         </div>
       </div>
 
+      <!-- Category -->
+      <div class="mb-3">
+        <label for="category" class="form-label">Category</label>
+        <select name="listing[category]" class="form-select" required id="category">
+          <option value="Trending">Trending</option>
+          <option value="Rooms">Rooms</option>
+          <option value="Iconic Cities">Iconic Cities</option>
+          <option value="Mountains">Mountains</option>
+          <option value="Beach">Beach</option>
+          <option value="Amazing Pools">Amazing Pools</option>
+          <option value="Farms">Farms</option>
+          <option value="Arctic">Arctic</option>
+          <option value="Domes">Domes</option>
+          <option value="Boats">Boats</option>
+        </select>
+        <div class="invalid-feedback">Please select a category</div>
+      </div>
+
       <!-- Location -->
       <div class="mb-3">
         <label for="location" class="form-label">Location</label>
         <input
           name="listing[location]"
+          id="location"
           placeholder="enter location"
           type="text"
           class="form-control"

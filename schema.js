@@ -15,7 +15,7 @@
 
 const Joi = require("joi");
 
-module.exports.listingSchema = Joi.object({
+const listingSchema = Joi.object({
   listing: Joi.object({
     title: Joi.string().required(),
     description: Joi.string().required(),
@@ -26,6 +26,10 @@ module.exports.listingSchema = Joi.object({
     price: Joi.string()
       .pattern(/^[0-9]+$/)
       .message("Price must contain only numbers")
+      .required(),
+    
+    category: Joi.string()
+      .valid("Trending", "Rooms", "Iconic Cities", "Mountains", "Beach", "Amazing Pools", "Farms", "Arctic", "Domes", "Boats")
       .required()
 
   }).required()
@@ -40,4 +44,4 @@ const reviewSchema = Joi.object({
   }).required()
 });
 
-module.exports = { reviewSchema };  // ✅ export as object
+module.exports = { listingSchema, reviewSchema };

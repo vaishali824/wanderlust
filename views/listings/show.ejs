@@ -17,19 +17,22 @@
             alt="listing_image"
         />
         <div class="card-body">
-            <p class="card-text">Owned by <i><%= listing.owner.username %></i></p>
-            <p class="card-text"><%= listing.description %></p>
-            <p class="card-text">
-                &#8377; <%= listing.price.toLocaleString("en-IN") %>
-            </p>
-            <p class="card-text"><%= listing.location %></p>
-            <p class="card-text"><%= listing.country %></p>
+            <div class="mb-2">
+                <span class="badge bg-danger px-3 py-2 shadow-sm" style="border-radius: 20px; font-weight: 500; font-size: 0.8rem;"><i class="fa-solid fa-tags me-1"></i> <%= listing.category %></span>
+            </div>
+            <p class="card-text mt-3">Owned by <i class="text-danger font-weight-bold">@<%= listing.owner ? listing.owner.username : "Anonymous" %></i></p>
+            <p class="card-text text-muted my-3" style="font-size: 1.05rem; line-height: 1.6;"><%= listing.description %></p>
+            <div class="d-flex align-items-center mb-3">
+                <span class="h4 text-dark mb-0 font-weight-bold">&#8377; <%= listing.price.toLocaleString("en-IN") %></span>
+                <span class="text-muted ms-2">/ night</span>
+            </div>
+            <p class="card-text text-muted"><i class="fa-solid fa-location-dot text-danger me-2"></i><%= listing.location %>, <%= listing.country %></p>
         </div>
     </div>
 
     <br />
 
-    <% if(currUser && listing.owner._id.equals(currUser._id)) { %>
+    <% if(currUser && listing.owner && listing.owner._id.equals(currUser._id)) { %>
     <div class="btns">
         <a
             href="/listings/<%= listing._id %>/edit"

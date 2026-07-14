@@ -21,14 +21,16 @@ const ejsLayouts = require("express-ejs-layouts");
 // const wrapAsync = require("./utils/wrapAsync.js");
 const ExpressError = require("./utils/ExpressError.js");
 const session = require("express-session");
-const MongoStore = require("connect-mongo");
+const MongoStore = require("connect-mongo").default || require("connect-mongo");
 const flash = require("connect-flash");
 const passport = require("passport");
 const LocalStrategy = require("passport-local");
 const User = require("./models/user.js");
 
 // MongoDB Connection
-const dbUrl = process.env.ATLASDB_URL || "mongodb://127.0.0.1:27017/wanderlust";
+const dbUrl = (process.env.ATLASDB_URL && !process.env.ATLASDB_URL.includes("add_your_mongodb_atlas_url"))
+  ? process.env.ATLASDB_URL
+  : "mongodb://127.0.0.1:27017/wanderlust";
 
 main()
   .then(() => console.log("Connected to DB"))
@@ -62,7 +64,7 @@ const store = MongoStore.create({
   touchAfter: 24 * 3600,
 });
 
-store.on("error", () => {
+store.on("error", (err) => {
   console.log("ERROR in MONGO SESSION STORE", err);
 });
 
@@ -99,6 +101,7 @@ app.use((req,res,next)=>{
   res.locals.success =req.flash("success");
   res.locals.error =req.flash("error");
   res.locals.currUser = req.user;
+  res.locals.googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY;
   next();
 });
 
