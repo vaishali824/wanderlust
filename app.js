@@ -32,17 +32,31 @@ const dbUrl = (process.env.ATLASDB_URL && !process.env.ATLASDB_URL.includes("add
   ? process.env.ATLASDB_URL
   : "mongodb://127.0.0.1:27017/wanderlust";
 
-main()
-  .then(() => console.log("Connected to DB"))
-  .catch((err) => {
-    console.log("DB Connection Error");
-    console.log(err);
-  });
+let isConnecting = false;
 
-  
-async function main() {
-  await mongoose.connect(dbUrl);
+async function connectDB() {
+  if (mongoose.connection.readyState >= 1) {
+    return;
+  }
+  if (isConnecting) {
+    return;
+  }
+  isConnecting = true;
+  try {
+    await mongoose.connect(dbUrl, {
+      serverSelectionTimeoutMS: 5000, // 5 seconds timeout instead of 30 seconds
+    });
+    console.log("Connected to DB successfully");
+  } catch (err) {
+    console.error("DB Connection Error:", err);
+  } finally {
+    isConnecting = false;
+  }
 }
+
+// Initial connection attempt
+connectDB();
+
 
 // View Engine
 app.set("view engine", "ejs");
@@ -90,6 +104,12 @@ passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+
+// Ensure DB connection is established before handling requests
+app.use(async (req, res, next) => {
+  await connectDB();
+  next();
+});
 
 // Root Route
 app.get("/", (req, res) => {  

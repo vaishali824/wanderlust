@@ -5,12 +5,12 @@ const multer = require("multer");
 let storage;
 let cloudinary = null;
 
-const hasCloudinaryEnv = process.env.CLOUD_NAME && 
-                         !process.env.CLOUD_NAME.includes("add_your") && 
-                         process.env.CLOUD_API_KEY && 
-                         !process.env.CLOUD_API_KEY.includes("add_your") &&
-                         process.env.CLOUD_API_SECRET && 
-                         !process.env.CLOUD_API_SECRET.includes("add_your");
+const hasCloudinaryEnv = process.env.CLOUD_NAME &&
+    !process.env.CLOUD_NAME.includes("add_your") &&
+    process.env.CLOUD_API_KEY &&
+    !process.env.CLOUD_API_KEY.includes("add_your") &&
+    process.env.CLOUD_API_SECRET &&
+    !process.env.CLOUD_API_SECRET.includes("add_your");
 
 if (hasCloudinaryEnv) {
     cloudinary = require("cloudinary").v2;
@@ -24,8 +24,8 @@ if (hasCloudinaryEnv) {
     storage = new CloudinaryStorage({
         cloudinary: cloudinary,
         params: {
-          folder: "wanderlust_DEV",
-          allowedFormats: ["png", "jpg", "jpeg"],
+            folder: "wanderlust_DEV",
+            allowedFormats: ["png", "jpg", "jpeg"],
         },
     });
     console.log("Cloudinary storage configured successfully.");
